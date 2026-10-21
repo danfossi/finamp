@@ -93,6 +93,12 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# tray_manager uses app_indicator_new from libayatana-appindicator, which marks
+# its C API as deprecated in newer releases.
+if(TARGET tray_manager_plugin)
+  target_compile_options(tray_manager_plugin PRIVATE -Wno-deprecated-declarations)
+endif()
+
 # Fix memory leak in audio player
 # https://github.com/media-kit/media-kit/issues/68
 target_link_libraries(${BINARY_NAME} PRIVATE ${MIMALLOC_LIB})
