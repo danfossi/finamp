@@ -117,7 +117,6 @@
               androidComposition.platform-tools
               cmake
               dbus
-              libayatana-appindicator # tray icon (tray_manager)
             ] ++ (if withFenix then [
               rustupStub
               (with pkgs.fenix; combine ([

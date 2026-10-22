@@ -56,14 +56,6 @@ diff --git a/lib/builders/finamp_settings_builder.dart b/lib/builders/finamp_set
 
 After that, you need to manually update `InvalidType` in generated code to represent actual types, which most of the time is done by reverting affected lines since there are currently only two types (`Color` and `Locale`) that trigger failure. This patch is not to be committed to tree due to [`getDisplayString` not being intended for code generation](https://github.com/dart-lang/sdk/issues/52455#issuecomment-1559972986), and so manual check of generated code is required.
 
-### Building for Linux
-
-On Linux, building Finamp requires the GTK3, D-Bus, libmpv, and Ayatana AppIndicator (used for the system tray icon via StatusNotifierItem) development headers:
-
-- Debian / Ubuntu: `sudo apt install build-essential cmake ninja-build libgtk-3-dev libmpv-dev libayatana-appindicator3-dev`
-- Arch Linux: `sudo pacman -S base-devel cmake ninja gtk3 mpv libayatana-appindicator`
-- Fedora: `sudo dnf install cmake ninja-build gtk3-devel mpv-libs-devel libayatana-appindicator-gtk3-devel`
-
 ### Building for Android
 
 You can build debug builds for Android right-away, but you will get an error if you try to build a release build (which is the default type).  

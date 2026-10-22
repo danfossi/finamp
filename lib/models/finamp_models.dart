@@ -976,15 +976,15 @@ class FinampSettings {
   @SettingsHelperMap("tabContentType")
   Map<ContentType, ContentViewType> perTabContentViewType;
 
-  /// Desktop (Windows/Linux) only: hide the window to the system tray instead of quitting when it is closed.
+  /// Desktop only: hide the window to the system tray instead of quitting when it is closed.
   @HiveField(161, defaultValue: DefaultSettings.closeToTray)
   bool closeToTray;
 
-  /// Desktop (Windows/Linux) only: hide the window to the system tray when it is minimized.
+  /// Desktop only: hide the window to the system tray when it is minimized.
   @HiveField(162, defaultValue: DefaultSettings.minimizeToTray)
   bool minimizeToTray;
 
-  /// Desktop (Windows/Linux) only: start with the window hidden in the system tray.
+  /// Desktop only: start with the window hidden in the system tray.
   @HiveField(163, defaultValue: DefaultSettings.startMinimizedToTray)
   bool startMinimizedToTray;
 
