@@ -3023,5 +3023,6 @@
     "trayPrevious": "Precedente",
     "trayNext": "Successivo",
     "trayQuit": "Esci da Finamp",
-    "trayNothingPlaying": "Nessuna riproduzione"
+    "trayNothingPlaying": "Nessuna riproduzione",
+    "trayTooltipPlaying": "{track} - Finamp"
 }

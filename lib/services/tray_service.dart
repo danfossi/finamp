@@ -18,8 +18,7 @@ import 'package:window_manager/window_manager.dart';
 /// On Linux, `tray_manager` (built on `nativeapi`) implements the
 /// StatusNotifierItem and DBusMenu specifications directly over GDBus,
 /// so it works on Wayland (KDE natively, GNOME with the AppIndicator
-/// extension, wlroots compositors via e.g. waybar) without requiring
-/// `libayatana-appindicator`.
+/// extension, wlroots compositors via e.g. waybar).
 ///
 /// The tray icon is only shown when at least one of the tray settings is enabled
 /// (or the app was started hidden with `--minimized`), so nothing changes for users
@@ -47,7 +46,7 @@ class TrayService with WindowListener {
 
   /// Keep the icon even if all settings are off, otherwise a window started with
   /// `--minimized` would be unreachable.
-  bool _forceTray;
+  final bool _forceTray;
   bool _windowVisible;
   bool _quitting = false;
 
@@ -56,10 +55,8 @@ class TrayService with WindowListener {
   String? _lastMenuSignature;
 
   tray.TrayIcon? _trayIcon;
-  tray.Image? _iconImage;
   tray.ListenerId? _trayListenerId;
-  tray.Menu? _menu;
-  final List<(tray.MenuItem, tray.ListenerId?)> _menuItems = [];
+  final Map<tray.MenuItemId, tray.ListenerId> _menuItemListeners = {};
 
   MusicPlayerBackgroundTask get _audioHandler => GetIt.instance<MusicPlayerBackgroundTask>();
 
@@ -79,11 +76,11 @@ class TrayService with WindowListener {
 
     _audioHandler.playbackState.map((state) => state.playing).distinct().listen((playing) {
       _isPlaying = playing;
-      unawaited(_refreshMenu());
+      _refreshMenu();
     });
     _audioHandler.mediaItem.distinct().listen((item) {
       _currentItem = item;
-      unawaited(_refreshMenu());
+      _refreshMenu();
     });
 
     unawaited(_applySettings());
@@ -110,7 +107,6 @@ class TrayService with WindowListener {
         final image = tray.ImageAsset.fromAsset(_iconPath);
         if (image != null) {
           trayIcon.icon = image;
-          _iconImage = image;
         }
         trayIcon.setContextMenuTrigger(
           Platform.isMacOS ? tray.ContextMenuTrigger.clicked : tray.ContextMenuTrigger.rightClicked,
@@ -119,7 +115,7 @@ class TrayService with WindowListener {
         trayIcon.setVisible(true);
         _trayIcon = trayIcon;
         _lastMenuSignature = null;
-        await _refreshMenu();
+        _refreshMenu();
       } else if (!_trayWanted && _trayVisible) {
         _destroyTray();
       }
@@ -130,27 +126,29 @@ class TrayService with WindowListener {
 
   void _destroyTray() {
     final trayIcon = _trayIcon;
-    _trayIcon = null;
-    if (trayIcon != null && _trayListenerId != null) {
+    if (trayIcon == null) return;
+    if (_trayListenerId != null) {
       trayIcon.removeListener(_trayListenerId!);
     }
     _trayListenerId = null;
     _disposeMenu();
-    _iconImage?.dispose();
-    _iconImage = null;
-    trayIcon?.dispose();
+    trayIcon.icon?.dispose();
+    trayIcon.dispose();
+    _trayIcon = null;
   }
 
   void _disposeMenu() {
-    for (final (item, listenerId) in _menuItems) {
+    final menu = _trayIcon?.getContextMenu();
+    if (menu == null) return;
+    for (final item in menu.allItems) {
+      final listenerId = _menuItemListeners.remove(item.id);
       if (listenerId != null) {
         item.removeListener(listenerId);
       }
       item.dispose();
     }
-    _menuItems.clear();
-    _menu?.dispose();
-    _menu = null;
+    _menuItemListeners.clear();
+    menu.dispose();
   }
 
   String get _iconPath => Platform.isWindows ? Assets.tray.trayIconIco : Assets.tray.trayIconPng.path;
@@ -165,7 +163,7 @@ class TrayService with WindowListener {
   void _refreshMenuAfterFrame() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _lastMenuSignature = null;
-      unawaited(_refreshMenu());
+      _refreshMenu();
     });
   }
 
@@ -173,19 +171,17 @@ class TrayService with WindowListener {
     final item = tray.MenuItem.createWithLabelAndType(label, tray.MenuItemType.normal);
     if (item == null) return null;
     item.isEnabled = enabled;
-    tray.ListenerId? listenerId;
     if (onClick != null) {
-      listenerId = item.addListener((event) {
+      _menuItemListeners[item.id] = item.addListener((event) {
         if (event is tray.MenuItemClickedEvent) {
           onClick();
         }
       });
     }
-    _menuItems.add((item, listenerId));
     return item;
   }
 
-  Future<void> _refreshMenu() async {
+  void _refreshMenu() {
     final trayIcon = _trayIcon;
     if (trayIcon == null) return;
     final l10n = GlobalSnackbar.requireL10n;
@@ -202,7 +198,6 @@ class TrayService with WindowListener {
       if (menu == null) return;
 
       _disposeMenu();
-      _menu = menu;
 
       menu.addItem(_createItem(nowPlaying ?? l10n.trayNothingPlaying, enabled: false));
       menu.addSeparator();
@@ -228,17 +223,15 @@ class TrayService with WindowListener {
       menu.addItem(_createItem(l10n.trayQuit, onClick: () => unawaited(quit())));
 
       trayIcon.setContextMenu(menu);
-      trayIcon.setTooltip(nowPlaying != null ? "$nowPlaying - Finamp" : "Finamp");
+      trayIcon.setTooltip(nowPlaying != null ? l10n.trayTooltipPlaying(nowPlaying) : l10n.finamp);
     } catch (e, stack) {
       _logger.warning("Failed to update tray menu", e, stack);
     }
   }
 
   Future<void> hideWindow() async {
-    // Make sure the user can get the window back.
     if (!_trayVisible) {
-      _forceTray = true;
-      await _applySettings();
+      throw StateError("Cannot hide window when tray icon is not visible");
     }
     await windowManager.hide();
     _setWindowVisible(false);
@@ -278,7 +271,7 @@ class TrayService with WindowListener {
   void _setWindowVisible(bool visible) {
     if (_windowVisible == visible) return;
     _windowVisible = visible;
-    unawaited(_refreshMenu());
+    _refreshMenu();
   }
 
   void _onTrayIconEvent(tray.TrayIconEvent event) {

@@ -3826,5 +3826,15 @@
   "trayQuit": "Quit Finamp",
   "@trayQuit": {"description": "System tray menu entry that fully quits the app"},
   "trayNothingPlaying": "Nothing playing",
-  "@trayNothingPlaying": {"description": "Disabled system tray menu entry shown in place of the current track when nothing is playing"}
+  "@trayNothingPlaying": {"description": "Disabled system tray menu entry shown in place of the current track when nothing is playing"},
+  "trayTooltipPlaying": "{track} - Finamp",
+  "@trayTooltipPlaying": {
+    "description": "System tray icon tooltip shown while a track is loaded",
+    "placeholders": {
+      "track": {
+        "type": "String",
+        "example": "Rick Astley - Never Gonna Give You Up"
+      }
+    }
+  }
 }
