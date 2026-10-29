@@ -3018,10 +3018,6 @@
     "startMinimizedToTraySubtitle": "Avvia Finamp con la finestra nascosta nell'area di notifica. Puoi anche usare l'opzione --minimized da riga di comando.",
     "trayShowWindow": "Mostra Finamp",
     "trayHideWindow": "Nascondi Finamp",
-    "trayPlay": "Riproduci",
-    "trayPause": "Pausa",
-    "trayPrevious": "Precedente",
-    "trayNext": "Successivo",
     "trayQuit": "Esci da Finamp",
     "trayNothingPlaying": "Nessuna riproduzione",
     "trayTooltipPlaying": "{track} - Finamp"

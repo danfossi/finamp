@@ -50,7 +50,6 @@ class TrayService with WindowListener {
   bool _windowVisible;
   bool _quitting = false;
 
-  bool _isPlaying = false;
   MediaItem? _currentItem;
   String? _lastMenuSignature;
 
@@ -74,10 +73,6 @@ class TrayService with WindowListener {
     // Menu labels are localized, rebuild them once the new locale is in effect.
     container.listen(finampSettingsProvider.locale, (_, _) => _refreshMenuAfterFrame());
 
-    _audioHandler.playbackState.map((state) => state.playing).distinct().listen((playing) {
-      _isPlaying = playing;
-      _refreshMenu();
-    });
     _audioHandler.mediaItem.distinct().listen((item) {
       _currentItem = item;
       _refreshMenu();
@@ -189,7 +184,7 @@ class TrayService with WindowListener {
     final hasTrack = _currentItem != null;
 
     // Avoid needlessly rebuilding the native menu.
-    final signature = "${l10n.localeName}|$_windowVisible|$_isPlaying|$nowPlaying";
+    final signature = "${l10n.localeName}|$_windowVisible|$nowPlaying";
     if (signature == _lastMenuSignature) return;
     _lastMenuSignature = signature;
 
@@ -210,15 +205,25 @@ class TrayService with WindowListener {
       menu.addSeparator();
       menu.addItem(
         _createItem(
-          _isPlaying ? l10n.trayPause : l10n.trayPlay,
+          l10n.togglePlaybackButtonTooltip,
           enabled: hasTrack,
           onClick: () => unawaited(_audioHandler.togglePlayback()),
         ),
       );
       menu.addItem(
-        _createItem(l10n.trayPrevious, enabled: hasTrack, onClick: () => unawaited(_audioHandler.skipToPrevious())),
+        _createItem(
+          l10n.skipToPreviousTrackButtonTooltip,
+          enabled: hasTrack,
+          onClick: () => unawaited(_audioHandler.skipToPrevious()),
+        ),
       );
-      menu.addItem(_createItem(l10n.trayNext, enabled: hasTrack, onClick: () => unawaited(_audioHandler.skipToNext())));
+      menu.addItem(
+        _createItem(
+          l10n.skipToNextTrackButtonTooltip,
+          enabled: hasTrack,
+          onClick: () => unawaited(_audioHandler.skipToNext()),
+        ),
+      );
       menu.addSeparator();
       menu.addItem(_createItem(l10n.trayQuit, onClick: () => unawaited(quit())));
 
